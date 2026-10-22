@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Löwen-Inseln</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div id="loading">Löwen-Inseln wird geladen…</div>
+
+<div id="auth" hidden>
+  <form id="authForm" autocomplete="on">
+    <h1 class="cinzel">LÖWEN-INSELN</h1>
+    <p class="muted" id="authLead">Melde dich an, um weiterzubauen.</p>
+    <label>Spielername<input id="authName" name="username" autocomplete="username" required minlength="3" maxlength="20"></label>
+    <label>Passwort<input id="authPw" name="password" type="password" autocomplete="current-password" required minlength="6"></label>
+    <div class="err" id="authErr" role="alert"></div>
+    <button class="cta" id="authBtn" type="submit">Anmelden</button>
+    <button class="switchmode" id="authSwitch" type="button">Noch kein Konto? Registrieren</button>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <header id="top"></header>
+  <div id="body">
+    <aside id="left"></aside>
+    <main id="stage">
+      <div id="island"></div>
+      <div id="map"></div>
+      <div id="overlay"></div>
+    </main>
+    <aside id="right"></aside>
+  </div>
+</div>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/GLTFLoader.js"></script>
+<script src="vendor/d3.min.js"></script>
+<script src="vendor/topojson-client.min.js"></script>
+<script src="shared/rules.js"></script>
+<script src="api.js"></script>
+<script src="game.js"></script>
+<script src="ui.js"></script>
+</body>
+</html>
