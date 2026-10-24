@@ -3,43 +3,23 @@
 class Game {
   constructor(props) {
     this.props = props;
-    this.T = {
-      haus:    { name: 'Wohnhaus',   cost: 40,  info: '+4 Bewohner, stapelbar', color: '#F2B5A7', pop: 4, inc: 0, jobs: 0, hap: 0 },
-      markt:   { name: 'Markt',      cost: 120, info: '+3/s · 4 Jobs',           color: '#F6D68B', pop: 0, inc: 3, jobs: 4, hap: 2 },
-      werk:    { name: 'Werkstatt',  cost: 200, info: '+7/s · 6 Jobs · laut',    color: '#9CB4C8', pop: 0, inc: 7, jobs: 6, hap: -5 },
-      hafen:   { name: 'Hafen',      cost: 350, info: '+12/s · 8 Jobs',          color: '#C9A27A', pop: 0, inc: 12, jobs: 8, hap: 1 },
-      kaserne: { name: 'Kaserne',    cost: 250, info: '+0,5 Truppen/s · 5 Jobs', color: '#B07A6A', pop: 0, inc: 0, jobs: 5, hap: -2, troops: 0.5 },
-      park:    { name: 'Park',       cost: 60,  info: '+6 Zufriedenheit',        color: '#A8D5BA', pop: 0, inc: 0, jobs: 0, hap: 6 },
-      turm:    { name: 'Leuchtturm', cost: 600, info: '+2/s · +8 Zufriedenheit', color: '#F4F1EA', pop: 0, inc: 2, jobs: 2, hap: 8 },
-      baeckerei: { name: 'Bäckerei',     cost: 150,  info: '+4/s · 3 Jobs',              color: '#F3D9B1', inc: 4, jobs: 3, hap: 2 },
-      farm:      { name: 'Bauernhof',    cost: 100,  info: '+2/s · 2 Jobs',              color: '#C9DE8C', inc: 2, jobs: 2, hap: 1 },
-      muehle:    { name: 'Windmühle',    cost: 180,  info: '+3/s · 2 Jobs',              color: '#E9E4D8', inc: 3, jobs: 2, hap: 1 },
-      brunnen:   { name: 'Löwenbrunnen', cost: 90,   info: '+4 Zufriedenheit',           color: '#BFD7E6', hap: 4 },
-      kirche:    { name: 'Kirche',       cost: 400,  info: '+10 Zufriedenheit · 1 Job',  color: '#DCE3EA', jobs: 1, hap: 10 },
-      rathaus:   { name: 'Rathaus',      cost: 800,  info: '+6/s · +5 Zufriedenheit',    color: '#E6D3A3', inc: 6, jobs: 4, hap: 5 },
-      wachturm:  { name: 'Wachturm',     cost: 220,  info: '+0,2 Truppen/s',             color: '#B9B2A6', jobs: 1, hap: -1, troops: 0.2 },
-      monument:  { name: 'Löwen-Monument', cost: 2000, info: '+10/s · +15 Zufriedenheit', color: '#E9C46A', inc: 10, hap: 15 },
-      pflaster:  { name: 'Pflasterweg',  cost: 5,    info: 'Deko-Weg',                   color: '#C8BBA6' },
-      banner:    { name: 'Banner',       cost: 30,   info: '+1 Zufriedenheit',           color: '#F4F1EA', hap: 1 },
-      bruecke:   { name: 'Brücke',       cost: 60,   info: 'Über Flüsse und Wasser',     color: '#A9A49A', hap: 1 },
-      land:    { name: 'Land kaufen', cost: 0,   info: '6×6 Grundstück freischalten', color: '#C9B27A' },
-      weg:     { name: 'Abreißen',   cost: 0,   info: 'Gibt die Hälfte zurück',  color: '#E98A7A' }
-    };
-    this.LAWS = [
-      { id: 'autofrei', name: 'Autofreie Insel', info: '+10 Zufriedenheit, −10 % Einnahmen' },
-      { id: 'ruhe',     name: 'Nachtruhe',       info: '+5 Zufriedenheit, Werkstätten −20 %' },
-      { id: 'markttag', name: 'Markttag',        info: 'Märkte +50 %, −2 Zufriedenheit' },
-      { id: 'wehr',     name: 'Wehrpflicht',     info: 'Truppen +50 %, −6 Zufriedenheit' }
-    ];
+    // Gebäude kommen aus den gemeinsamen Regeln, dazu die drei Werkzeuge
+    this.T = { auswahl: { name: 'Auswählen', cost: 0, color: '#8D9BB0', tool: true } };
+    for (const id in TWRules.BUILDINGS) if (id !== 'rathaus') this.T[id] = TWRules.BUILDINGS[id];
+    this.T.rathaus = TWRules.BUILDINGS.rathaus;
+    this.T.land = { name: 'Land kaufen', cost: 0, color: '#C9B27A', tool: true };
+    this.T.weg = { name: 'Abreißen', cost: 0, color: '#E98A7A', tool: true };
+    this.LAWS = TWRules.LAWS;
     this.FACTIONS = TWRules.FACTIONS;
     this.cFaction = TWRules.COUNTRY_FACTION;
     this.HOUSE = ['#F2B5A7', '#F6D68B', '#A8D5BA', '#9CC3E6', '#D7B8E8', '#F4F1EA', '#F3C8A0'];
-    this.grid = {}; this.hexCache = {}; this.unlocked = []; this.troopGain = 0;
+    this.grid = {}; this.hexCache = {}; this.unlocked = [];
     const c = props.city || {};
     this.saved = c;
-    this.state = { coins: c.coins ?? TWRules.START_COINS, troops: c.troops ?? TWRules.START_TROOPS, earned: c.earned || 0, tool: 'haus', tab: 'regeln', tax: c.tax ?? 10, laws: c.laws || {}, msg: '', night: false,
-      view: c.home ? 'insel' : 'karte', home: c.home || null, selHex: null, own: {}, others: {}, ownV: 0,
+    this.state = { coins: c.coins ?? TWRules.START_COINS, troops: c.troops ?? TWRules.START_TROOPS, earned: c.earned || 0, tool: 'auswahl', tab: 'regeln', tax: c.tax ?? 10, laws: c.laws || {}, msg: '', night: false,
+      view: c.home ? 'insel' : 'karte', home: c.home || null, selHex: null, selTile: null, own: {}, ownV: 0,
       log: c.log && c.log.length ? c.log : [{ t: 'Tag 1', m: 'Wähle auf der Weltkarte dein Startgebiet.' }], mapReady: false, day: c.day || 1 };
+    this.sync = { coins: this.state.coins, troops: this.state.troops, earned: this.state.earned, t: Date.now() };
     this.listeners = [];
   }
 
@@ -60,66 +40,67 @@ class Game {
   onChange(f) { this.listeners.push(f); }
 
   start() {
-    this.timer = setInterval(() => {
-      const s = this.calc();
-      this.troopGain += s.troopRate;
-      this.setState(st => ({ coins: st.coins + s.income, earned: st.earned + s.income, troops: st.troops + s.troopRate }));
-    }, 1000);
-    this.saveTimer = setInterval(() => this.save(), 20000);
-    addEventListener('beforeunload', () => this.save(true));
+    // Der Server rechnet verbindlich. Hier wird zwischen zwei Antworten nur hochgezählt.
+    this.timer = setInterval(() => this.tick(), 1000);
+    this.syncTimer = setInterval(async () => { try { this.applyCity(await TWApi.me()); } catch (e) {} }, 30000);
+    const off = this.props.offline;
+    if (off && (off.coins > 0 || off.troops > 0) && this.saved.home) setTimeout(() => this.toast('Während du weg warst: +' + off.coins.toLocaleString('de-DE') + ' Münzen, +' + off.troops + ' Truppen'), 800);
     this.loadMap();
   }
-  cityData() {
-    const st = this.state, grid = {};
-    for (const k in this.grid) grid[k] = { type: this.grid[k].type, floors: this.grid[k].floors };
-    return { grid, unlocked: this.unlocked, tax: st.tax, laws: st.laws, coins: Math.floor(st.coins), earned: Math.floor(st.earned), day: st.day, log: st.log };
+  tick() {
+    const now = Date.now(), s = this.calc(), dt = (now - this.sync.t) / 1000;
+    // Fertige Ausbauten sofort zeigen, der Server übernimmt sie bei der nächsten Antwort ebenso
+    for (const k in this.grid) { const g = this.grid[k]; if (g.busyUntil && g.busyUntil <= now) { g.lvl = (g.lvl || 1) + 1; delete g.busyUntil; this.build(k); this.toast(this.T[g.type].name + ' ist jetzt auf Stufe ' + g.lvl); } }
+    this.setState({ coins: this.sync.coins + s.income * dt, earned: this.sync.earned + s.income * dt, troops: this.sync.troops + s.troopRate * dt });
   }
-  async save(leaving) {
-    // Erst speichern, wenn die Stadt zur Heimatregion aufgebaut ist, sonst würde die Platzhalter-Insel den Stand überschreiben
-    if (!this.state.home || this.terrainFor !== this.state.home) return;
-    const gain = this.troopGain; this.troopGain = 0;
-    try {
-      const r = await TWApi.saveCity(this.cityData(), gain, leaving);
-      if (r && typeof r.troops === 'number') this.setState({ troops: r.troops + this.troopGain });
-    } catch (e) { this.troopGain += gain; }
+  // Antwort des Servers übernehmen: nur geänderte Felder neu bauen
+  applyCity(r) {
+    if (!r || !r.city) return;
+    const c = r.city, before = this.grid, next = c.grid || {};
+    this.sync = { coins: c.coins, troops: c.troops, earned: c.earned, t: Date.now() };
+    const landChanged = JSON.stringify(c.unlocked || []) !== JSON.stringify(this.unlocked);
+    this.grid = {};
+    for (const k in next) this.grid[k] = { ...next[k], floors: next[k].floors ? next[k].floors.slice() : undefined };
+    if (this.sc && this.terrainFor) {
+      const keys = new Set(Object.keys(before).concat(Object.keys(this.grid)));
+      keys.forEach(k => { if (JSON.stringify(before[k]) !== JSON.stringify(this.grid[k])) { const t = this.tiles && this.tiles[k]; if (t && this.grid[k] && (t.tree || t.deco)) { t.tree = false; t.deco = null; this.decoDirty = true; } this.build(k); } });
+      if (landChanged) { this.unlocked = (c.unlocked || []).slice(); this.applyUnlocked(); this.decoDirty = true; }
+      if (this.decoDirty) { this.decoDirty = false; this.drawTerrain(); }
+    } else this.unlocked = (c.unlocked || []).slice();
+    this.setState({ coins: c.coins, troops: c.troops, earned: c.earned, tax: c.tax, laws: c.laws || {}, log: c.log && c.log.length ? c.log : this.state.log, day: c.day || 1 });
   }
-  // Was die Stadt seit dem letzten Speichern verdient hat (höchstens 8 Stunden)
-  offlineEarnings() {
-    const c = this.saved; if (!c || !c.saved || !c.home) return;
-    const sec = Math.min(8 * 3600, Math.max(0, (this.props.now - c.saved) / 1000));
-    if (sec < 60) return;
-    const s = this.calc(), coins = Math.round(s.income * sec), troops = Math.round(s.troopRate * sec);
-    this.troopGain += troops;
-    this.setState(st => ({ coins: st.coins + coins, earned: st.earned + coins, troops: st.troops + troops }));
-    this.toast('Während du weg warst: +' + coins.toLocaleString('de-DE') + ' Münzen, +' + troops + ' Truppen');
+  applyUnlocked() {
+    if (!this.tiles) return;
+    for (const k in this.tiles) { const t = this.tiles[k]; if (!t.w) t.locked = !TWRules.START_CHUNKS.includes(this.chunkOf(k)); }
+    this.unlocked.forEach(ch => this.chunkTiles(ch).forEach(q => { if (this.tiles[q] && !this.tiles[q].w) this.tiles[q].locked = false; }));
+  }
+  // Aktionen laufen nacheinander, damit keine verloren geht und der Server sie in Klick-Reihenfolge sieht
+  act(a) {
+    const run = async () => {
+      try { const r = await TWApi.action(a); this.applyCity(r); return r; }
+      catch (e) { this.toast(e.message); if (e.data) this.applyCity(e.data); return null; }
+    };
+    const p = (this.actQueue || Promise.resolve()).then(run);
+    this.actQueue = p;
+    return p;
   }
   rnd(s) { let v = Math.sin(s * 12.9898 + 78.233) * 43758.5453; return v - Math.floor(v); }
   hash(str) { let h = 0; for (let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) | 0; return Math.abs(h); }
 
   /* ---------- Wirtschaft ---------- */
-  calc() {
-    let pop = 0, jobs = 0, inc = { markt: 0, werk: 0, hafen: 0, turm: 0, kaserne: 0 }, hap = 60, counts = {}, troopB = 0;
-    const L = this.state.laws;
-    for (const k in this.grid) {
-      const c = this.grid[k], t = this.T[c.type];
-      counts[c.type] = (counts[c.type] || 0) + 1;
-      if (c.type === 'haus') pop += t.pop * c.floors.length;
-      else { jobs += t.jobs || 0; inc[c.type] = (inc[c.type] || 0) + (t.inc || 0); hap += t.hap || 0; troopB += t.troops || 0; }
-    }
-    if (L.ruhe) inc.werk *= 0.8;
-    if (L.markttag) inc.markt *= 1.5;
-    hap += (L.autofrei ? 10 : 0) + (L.ruhe ? 5 : 0) - (L.markttag ? 2 : 0) - (L.wehr ? 6 : 0);
-    hap -= this.state.tax * 1.4;
-    hap = Math.max(0, Math.min(100, hap));
-    const staff = jobs ? Math.min(1, pop / jobs) : 1;
-    const reg = this.regionIncome();
-    let income = Object.values(inc).reduce((a, b) => a + b, 0) * staff + pop * this.state.tax / 100 * 1.2 + reg;
-    income *= 0.5 + hap / 100;
-    if (L.autofrei) income *= 0.9;
-    let troopRate = (0.25 + troopB * staff) * (L.wehr ? 1.5 : 1);
-    return { pop, jobs, hap, income, staff, counts, reg, troopRate };
-  }
+  thLevel() { return TWRules.townHall(this.grid); }
+  calc() { return TWRules.cityStats({ grid: this.grid, laws: this.state.laws, tax: this.state.tax }, this.regionIncome()); }
   regionIncome() { let s = 0; const o = this.state.own; if (!this.rById) return 0; for (const k in o) if (o[k] === 'me') { const h = this.rById[k]; if (h) s += h.yield; } return s; }
+  buildingInfo(id, lvl) {
+    const t = this.T[id], m = TWRules.lvlMult(lvl || 1), f = x => (Math.round(x * 10) / 10).toLocaleString('de-DE'), out = [];
+    if (id === 'haus') return '+4 Bewohner je Stockwerk';
+    if (t.inc) out.push('+' + f(t.inc * m) + '/s');
+    if (t.troops) out.push('+' + f(t.troops * m) + ' Truppen/s');
+    if (t.hap) out.push((t.hap > 0 ? '+' : '') + f(t.hap * (1 + 0.3 * ((lvl || 1) - 1))) + ' Zufr.');
+    if (t.jobs) out.push(Math.round(t.jobs * (1 + 0.5 * ((lvl || 1) - 1))) + ' Jobs');
+    if (t.water) out.push('aufs Wasser');
+    return out.join(' · ') || 'Deko';
+  }
   level() { const e = this.state.earned; const lv = Math.floor(Math.sqrt(e / 150)) + 1; const a = Math.pow(lv - 1, 2) * 150, b = Math.pow(lv, 2) * 150; return { lv, pct: (e - a) / (b - a) }; }
   toast(m) { clearTimeout(this.mt); this.setState({ msg: m }); this.mt = setTimeout(() => this.setState({ msg: '' }), 2200); }
 
@@ -191,11 +172,11 @@ class Game {
     const r = this.rById[this.state.selHex]; if (!r || r.faction || this.busy) return;
     this.busy = true;
     try {
-      const w = await TWApi.start(r.id);
+      const w = await TWApi.start(r.id, r.name + " (" + r.country + ")");
       this.applyWorld(w);
-      this.setState({ home: r.id, view: 'insel', log: [{ t: 'Tag 1', m: 'Dein Reich wird in ' + r.name + ' (' + r.country + ') gegründet.' }] }, () => this.buildTerrain());
-      this.toast('Willkommen in ' + r.name + '!');
-      this.save();
+      this.saved = { home: r.id };
+      this.setState({ home: r.id, view: "insel" }, () => this.buildTerrain());
+      this.toast("Willkommen in " + r.name + "!");
     } catch (e) { this.toast(e.message); try { this.applyWorld(await TWApi.world()); } catch (x) {} }
     this.busy = false;
   }
@@ -203,16 +184,11 @@ class Game {
     const r = this.rById[this.state.selHex]; if (!r || this.busy) return;
     const chk = this.attackCheck(r); if (!chk.ok) { this.toast(chk.why); return; }
     this.busy = true;
-    const prev = this.ownerOf(r.id);
     try {
-      await this.save();
-      const res = await TWApi.attack(r.id);
-      const msg = r.name + ' (' + r.country + ') erobert' + (prev !== 'neutral' ? ', vom ' + this.FACTIONS[prev].name : '') + '. +' + res.loot + ' Beute';
+      const res = await TWApi.attack(r.id, r.name + " (" + r.country + ")");
       this.applyWorld(res);
-      this.setState(st => ({ troops: res.troops + this.troopGain, coins: st.coins + res.loot, earned: st.earned + res.loot,
-        day: st.day + 1, log: [{ t: 'Tag ' + (st.day + 1), m: msg }].concat(st.log).slice(0, 8) }));
-      this.toast(r.name + ' erobert!');
-      this.save();
+      this.applyCity(res);
+      this.toast(r.name + " erobert! +" + res.loot + " Beute");
     } catch (e) { this.toast(e.message); }
     this.busy = false;
   }
@@ -389,22 +365,28 @@ class Game {
     // Gespeicherten Stand übernehmen: gekaufte Grundstücke und Gebäude
     const restore = saved && home && saved.home === home.id && saved.grid && Object.keys(saved.grid).length;
     this.unlocked = restore ? (saved.unlocked || []).slice() : [];
-    this.bought = this.unlocked.length;
-    this.unlocked.forEach(ch => this.chunkTiles(ch).forEach(q => { if (this.tiles[q] && !this.tiles[q].w) this.tiles[q].locked = false; }));
-    if (restore) {
-      for (const k in saved.grid) if (this.T[saved.grid[k].type]) { this.grid[k] = { type: saved.grid[k].type, floors: (saved.grid[k].floors || []).slice() }; const t = this.tiles[k]; if (t) { t.tree = false; t.deco = null; } }
-    } else {
-      const spots = Object.keys(this.tiles).filter(k => !this.tiles[k].w && !this.tiles[k].locked)
-        .sort((a, b) => { const p = a.split(',').map(Number), q = b.split(',').map(Number); return Math.hypot(p[0] + 0.5, p[1] + 0.5) - Math.hypot(q[0] + 0.5, q[1] + 0.5); });
-      [['haus', 2], ['haus', 1], ['markt'], ['park'], ['haus', 3], ['haus', 1]].forEach(([t, fl], n) => { const k = spots[n]; if (!k) return;
-        this.grid[k] = { type: t, floors: t === 'haus' ? Array.from({ length: fl }, (_, x) => this.HOUSE[(x + n * 3) % this.HOUSE.length]) : [] }; });
+    this.applyUnlocked();
+    if (restore) for (const k in saved.grid) if (this.T[saved.grid[k].type]) {
+      this.grid[k] = { ...saved.grid[k], floors: saved.grid[k].floors ? saved.grid[k].floors.slice() : undefined };
+      const t = this.tiles[k]; if (t) { t.tree = false; t.deco = null; }
     }
+    if (!home) [["haus", 2], ["haus", 1], ["markt"], ["park"], ["haus", 3], ["haus", 1], ["rathaus"]].forEach(([t, fl], n) => {
+      const k = this.freeSpots()[0]; if (k) this.grid[k] = { type: t, lvl: 1, floors: t === "haus" ? Array.from({ length: fl }, (_, x) => this.HOUSE[(x + n * 3) % this.HOUSE.length]) : undefined }; });
     this.drawTerrain();
     Object.keys(this.grid).forEach(k => this.build(k));
     this.terrainFor = home ? home.id : null;
     this.dist = 58; this.camUpd(); this.spawnLife();
-    if (restore && !this.offlineDone) { this.offlineDone = true; this.offlineEarnings(); }
+    // Neue Stadt oder alter Spielstand ohne Rathaus: Startgebäude beim Server anlegen
+    if (home && !Object.values(this.grid).some(g => g.type === "rathaus")) {
+      const colors = Array.from({ length: 21 }, (_, n) => this.HOUSE[(n * 5 + 1) % this.HOUSE.length]);
+      this.act({ type: "init", spots: this.freeSpots().slice(0, 12), colors });
+    }
     this.forceUpdate();
+  }
+  // Freie, ebene Felder der Baufläche, die mittleren zuerst
+  freeSpots() {
+    return Object.keys(this.tiles).filter(k => { const t = this.tiles[k]; return !t.w && !t.locked && !this.grid[k] && t.h <= 1; })
+      .sort((a, b) => { const p = a.split(",").map(Number), q = b.split(",").map(Number); return Math.hypot(p[0] + 0.5, p[1] + 0.5) - Math.hypot(q[0] + 0.5, q[1] + 0.5); });
   }
   top(k) { const t = this.tiles && this.tiles[k]; return t && !t.w ? 0.35 + t.h * 0.6 : 0.35; }
   drawTerrain() {
@@ -442,23 +424,17 @@ class Game {
   }
   chunkOf(k) { const [i, j] = k.split(',').map(Number); return Math.floor((i + this.half) / this.CH) + ',' + Math.floor((j + this.half) / this.CH); }
   chunkTiles(ch) { const [a, b] = ch.split(',').map(Number), out = []; for (let i = 0; i < this.CH; i++) for (let j = 0; j < this.CH; j++) out.push((a * this.CH + i - this.half) + ',' + (b * this.CH + j - this.half)); return out; }
-  landCost() { return 150 + (this.bought || 0) * 100; }
+  landCost() { return TWRules.landCost(this.unlocked.length); }
   buyLand(k) {
     const t = this.tiles[k];
-    if (!t || t.w) { this.toast('Wähle ein Stück Land am Rand deiner Baufläche'); return; }
-    if (!t.locked) { this.toast('Dieses Land gehört dir schon'); return; }
-    const ch = this.chunkOf(k), tl = this.chunkTiles(ch);
-    const [a, b] = ch.split(',').map(Number);
-    const adj = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([x, y]) => this.chunkTiles((a + x) + ',' + (b + y)).some(q => this.tiles[q] && !this.tiles[q].w && !this.tiles[q].locked));
-    if (!adj) { this.toast('Kaufe nur Land, das an deine Baufläche grenzt'); return; }
-    const cost = this.landCost();
-    if (this.state.coins < cost) { this.toast('Zu wenig Münzen. Das Grundstück kostet ' + cost + '.'); return; }
-    tl.forEach(q => { if (this.tiles[q] && !this.tiles[q].w) this.tiles[q].locked = false; });
-    this.bought = (this.bought || 0) + 1;
-    this.unlocked.push(ch);
-    this.drawTerrain();
-    this.setState(s => ({ coins: s.coins - cost }));
-    this.toast('Neues Grundstück gekauft');
+    if (!t || t.w) { this.toast("Wähle ein Stück Land am Rand deiner Baufläche"); return; }
+    if (!t.locked) { this.toast("Dieses Land gehört dir schon"); return; }
+    if (this.unlocked.length >= TWRules.maxChunks(this.thLevel())) { this.toast("Mehr Land gibt es ab der nächsten Rathaus-Stufe"); return; }
+    const ch = this.chunkOf(k), [a, b] = ch.split(",").map(Number);
+    const open = q => TWRules.START_CHUNKS.includes(q) || this.unlocked.includes(q);
+    if (![[1, 0], [-1, 0], [0, 1], [0, -1]].some(([x, y]) => open((a + x) + "," + (b + y)))) { this.toast("Kaufe nur Land, das an deine Baufläche grenzt"); return; }
+    if (this.state.coins < this.landCost()) { this.toast("Zu wenig Münzen. Das Grundstück kostet " + this.landCost() + "."); return; }
+    this.act({ type: "buyLand", ch }).then(r => { if (r) this.toast("Neues Grundstück gekauft"); });
   }
   camUpd() { const d = this.dist; this.cam.position.set(Math.sin(this.th) * Math.cos(this.ph) * d, Math.sin(this.ph) * d, Math.cos(this.th) * Math.cos(this.ph) * d); this.cam.lookAt(0, 1.5, 0); }
   M(c) { const T = window.THREE; return this.mats[c] || (this.mats[c] = new T.MeshStandardMaterial({ color: c, roughness: 0.85 })); }
@@ -495,6 +471,10 @@ class Game {
         if (m) g.add(m);
         if (c.type === 'turm' && this.state.night) { const l = new T.PointLight('#FFD76A', 1.2, 14); l.position.set(0, 3.6, 0); g.add(l); }
       }
+      const lv = c.lvl || 1;
+      if (lv > 1 && c.type !== "haus") g.children.forEach(m => m.scale.multiplyScalar(1 + 0.07 * (lv - 1)));
+      if (c.busyUntil) this.scaffold(g);
+      if (this.state.selTile === k) this.selMarker(g);
       this.world.add(g); this.meshes[k] = g; return;
     }
     if (c.type !== 'hafen') g.add(this.B(2.2, 0.6, 2.2, '#DCD3C2', 0, 0.05, 0));
@@ -542,6 +522,16 @@ class Game {
     }
     this.world.add(g); this.meshes[k] = g;
   }
+  scaffold(g) {
+    const wood = "#B98A5A", h = 2.6;
+    [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([x, z]) => g.add(this.B(0.1, h, 0.1, wood, x * 1.05, h / 2, z * 1.05)));
+    [0.9, 1.8].forEach(y => { g.add(this.B(2.2, 0.08, 0.1, wood, 0, y, 1.05)); g.add(this.B(2.2, 0.08, 0.1, wood, 0, y, -1.05)); g.add(this.B(0.1, 0.08, 2.2, wood, 1.05, y, 0)); g.add(this.B(0.1, 0.08, 2.2, wood, -1.05, y, 0)); });
+    g.add(this.B(0.5, 0.5, 0.5, "#E9C46A", 0.7, h + 0.25, 0.7));
+  }
+  selMarker(g) {
+    const T = window.THREE, m = new T.Mesh(new T.RingGeometry(1.25, 1.45, 32), new T.MeshBasicMaterial({ color: "#F4D98B", transparent: true, opacity: 0.9, side: T.DoubleSide }));
+    m.rotation.x = -Math.PI / 2; m.position.y = 0.05; g.add(m);
+  }
   pick(e) {
     const b = this.r.domElement.getBoundingClientRect();
     this.ray.setFromCamera({ x: (e.clientX - b.left) / b.width * 2 - 1, y: -(e.clientY - b.top) / b.height * 2 + 1 }, this.cam);
@@ -565,34 +555,38 @@ class Game {
   click(e) {
     const p = this.pick(e); if (!p) return;
     const k = p.key, c = this.grid[k], tool = this.state.tool, t = this.T[tool];
-    if (tool === 'land') { this.buyLand(k); return; }
-    if (tool === 'weg') {
+    if (tool === "land") { this.buyLand(k); return; }
+    if (tool === "weg") {
       if (!c) return;
-      const back = c.type === 'haus' ? 20 : Math.round(this.T[c.type].cost / 2);
-      if (c.type === 'haus' && c.floors.length > 1) c.floors.pop(); else delete this.grid[k];
-      this.build(k); this.setState(s => ({ coins: s.coins + back })); this.toast('Abgerissen, +' + back + ' Münzen'); return;
+      if (c.type === "rathaus") { this.toast("Das Rathaus kannst du nicht abreißen"); return; }
+      this.act({ type: "demolish", k }).then(r => { if (r) { this.toast("Abgerissen, +" + r.refund + " Münzen"); if (this.state.selTile === k && !this.grid[k]) this.setState({ selTile: null }); } });
+      return;
     }
-    if (this.state.coins < t.cost) { this.toast('Zu wenig Münzen. Dir fehlen ' + Math.ceil(t.cost - this.state.coins) + '.'); return; }
+    // Auswählen, oder Klick auf ein bestehendes Gebäude (außer Aufstocken): Gebäude-Panel öffnen
+    if (tool === "auswahl" || (c && !(tool === "haus" && c.type === "haus"))) { const prev = this.state.selTile; this.setState({ selTile: c ? k : null, tab: c ? "gebaeude" : this.state.tab === "gebaeude" ? "regeln" : this.state.tab }); if (prev) this.build(prev); if (c) this.build(k); return; }
+    if (this.thLevel() < t.minTH) { this.toast(t.name + " gibt es ab Rathaus-Stufe " + t.minTH); return; }
+    const color = this.HOUSE[Math.floor(Math.random() * this.HOUSE.length)];
     if (c) {
-      if (tool === 'haus' && c.type === 'haus') {
-        if (c.floors.length >= 5) { this.toast('Höher geht es nicht'); return; }
-        c.floors.push(this.HOUSE[Math.floor(Math.random() * this.HOUSE.length)]);
-      } else { this.toast('Hier steht schon etwas'); return; }
-    } else {
-      const [i, j] = k.split(',').map(Number);
-      const tt = this.tiles[k];
-      if (tool === 'hafen' || tool === 'bruecke') {
-        if (tt && !tt.w) { this.toast('Häfen baust du ins Wasser an deiner Küste oder an einen Fluss'); return; }
-        const shore = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => { const o = this.tiles[(i + a) + ',' + (j + b)]; return o && !o.w && !o.locked; });
-        if (!shore) { this.toast('Der Hafen muss an dein freigeschaltetes Land grenzen'); return; }
-      } else if (!tt || tt.w) { this.toast('Hier ist Wasser. Nur Häfen gehen aufs Wasser.'); return; }
-      else if (tt.locked) { this.toast('Dieses Land gehört dir noch nicht. Nutze „Land kaufen“.'); return; }
-      if (tt && (tt.tree || tt.deco)) { tt.tree = false; tt.deco = null; this.drawTerrain(); }
-      this.grid[k] = { type: tool, floors: tool === 'haus' ? [this.HOUSE[Math.floor(Math.random() * this.HOUSE.length)]] : [] };
+      if (c.floors.length >= TWRules.maxFloors(this.thLevel())) { this.toast(c.floors.length >= 5 ? "Höher geht es nicht" : "Mehr Stockwerke gibt es mit dem nächsten Rathaus-Ausbau"); return; }
+      if (this.state.coins < t.cost) { this.toast("Zu wenig Münzen. Dir fehlen " + Math.ceil(t.cost - this.state.coins) + "."); return; }
+      this.act({ type: "stack", k, color });
+      return;
     }
-    this.build(k); this.setState(s => ({ coins: s.coins - t.cost }));
-    if (tool === 'kaserne') this.spawnLife();
+    const [i, j] = k.split(",").map(Number), tt = this.tiles[k];
+    if (t.water) {
+      if (tt && !tt.w) { this.toast(t.name + " baust du ins Wasser an deiner Küste oder an einen Fluss"); return; }
+      const shore = [[1, 0], [-1, 0], [0, 1], [0, -1]].some(([a, b]) => { const o = this.tiles[(i + a) + "," + (j + b)]; return o && !o.w && !o.locked; });
+      if (!shore) { this.toast(t.name + " muss an dein freigeschaltetes Land grenzen"); return; }
+    } else if (!tt || tt.w) { this.toast("Hier ist Wasser. Nur Häfen und Brücken gehen aufs Wasser."); return; }
+    else if (tt.locked) { this.toast("Dieses Land gehört dir noch nicht. Nutze „Land kaufen“."); return; }
+    if (this.state.coins < t.cost) { this.toast("Zu wenig Münzen. Dir fehlen " + Math.ceil(t.cost - this.state.coins) + "."); return; }
+    this.act({ type: "build", k, build: tool, color }).then(r => { if (r && tool === "kaserne") this.spawnLife(); });
   }
+  upgradeSel() { const k = this.state.selTile; if (k) this.act({ type: "upgrade", k }).then(r => { if (r) this.toast("Ausbau gestartet"); }); }
+  rushSel() { const k = this.state.selTile; if (k) this.act({ type: "rush", k }).then(r => { if (r) this.toast("Sofort fertig!"); }); }
+  demolishSel() { const k = this.state.selTile, c = this.grid[k]; if (!c) return; this.act({ type: "demolish", k }).then(r => { if (r) { this.toast("Abgerissen, +" + r.refund + " Münzen"); if (!this.grid[k]) this.setState({ selTile: null, tab: "regeln" }); } }); }
+  setTax(v) { this.setState({ tax: v }); clearTimeout(this.taxT); this.taxT = setTimeout(() => this.act({ type: "tax", value: v }), 300); }
+  toggleLaw(id) { const on = !this.state.laws[id]; this.setState(x => ({ laws: { ...x.laws, [id]: on } })); this.act({ type: "law", id, on }); }
 
   /* ---------- 3D-Modelle ---------- */
   async loadModels() {
@@ -717,11 +711,30 @@ class Game {
     if (!this._map) this._map = (el) => { if (el) { this.mapEl = el; } };
     const s = this.calc(), lv = this.level(), st = this.state, fmt = (n) => Math.floor(n).toLocaleString('de-DE');
     const isIsland = st.view === 'insel', isMap = !isIsland;
-    const tools = Object.keys(this.T).map(id => ({ ...this.T[id], id, costLabel: id === 'land' ? this.landCost() : this.T[id].cost ? this.T[id].cost : '', selected: st.tool === id, notSelected: st.tool !== id, pick: () => this.setState({ tool: id }) }));
-    const tabs = [['regeln', 'Regeln'], ['stadt', 'Insel'], ['clan', 'Clan']].map(([id, label]) => ({ label, active: st.tab === id, inactive: st.tab !== id, pick: () => this.setState({ tab: id }) }));
+    const th = this.thLevel(), now = Date.now();
+    const tools = Object.keys(this.T).filter(id => id !== "rathaus").map(id => { const t = this.T[id], locked = !t.tool && th < t.minTH;
+      return { ...t, id, locked, info: id === "auswahl" ? "Gebäude ansehen und ausbauen" : id === "land" ? "6×6 Grundstück · " + this.unlocked.length + "/" + TWRules.maxChunks(th) : id === "weg" ? "Gibt die Hälfte zurück" : locked ? "ab Rathaus-Stufe " + t.minTH : this.buildingInfo(id, 1),
+        costLabel: id === "land" ? this.landCost() : t.cost ? t.cost : "", selected: st.tool === id, notSelected: st.tool !== id, pick: () => this.setState({ tool: id }) }; });
+    const busy = TWRules.busyCount(this.grid, now);
+    let sel = null;
+    const sk = st.selTile, sg = sk && this.grid[sk];
+    if (sg) {
+      const t = this.T[sg.type], lvl = sg.lvl || 1, fmtT = sec => { sec = Math.max(0, Math.ceil(sec)); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), x = sec % 60; return h ? h + " h " + m + " min" : m ? m + " min " + (x ? x + " s" : "") : x + " s"; };
+      const maxed = lvl >= t.maxLvl, needTH = sg.type !== "rathaus" && lvl >= th;
+      const remain = sg.busyUntil ? (sg.busyUntil - now) / 1000 : 0, total = sg.busyUntil ? TWRules.upgradeTime(sg.type, lvl) : 1;
+      sel = { name: t.name, color: t.color, lvl, maxLvl: t.maxLvl, isHouse: sg.type === "haus", floors: sg.floors ? sg.floors.length : 0, maxFloors: TWRules.maxFloors(th),
+        now: this.buildingInfo(sg.type, lvl), next: !maxed && sg.type !== "haus" ? this.buildingInfo(sg.type, lvl + 1) : "",
+        busy: !!sg.busyUntil, remain: fmtT(remain), pct: Math.round((1 - remain / total) * 100), rushCost: TWRules.rushCost(remain),
+        canUp: !sg.busyUntil && !maxed && !needTH && sg.type !== "haus", upCost: TWRules.upgradeCost(sg.type, lvl), upTime: fmtT(TWRules.upgradeTime(sg.type, lvl)),
+        why: sg.type === "haus" ? "Wohnhäuser wachsen durch Aufstocken: wähle Wohnhaus und klicke auf das Haus." : maxed ? "Höchste Stufe erreicht." : needTH ? "Baue zuerst dein Rathaus auf Stufe " + (lvl + 1) + " aus." : busy >= TWRules.BUILDERS && !sg.busyUntil ? "Alle Bauarbeiter sind beschäftigt." : "",
+        builderFull: busy >= TWRules.BUILDERS, isTH: sg.type === "rathaus",
+        unlocks: sg.type === "rathaus" && lvl < TWRules.MAX_TH ? Object.keys(this.T).filter(id => this.T[id].minTH === lvl + 1).map(id => this.T[id].name).join(", ") : "",
+        upgrade: () => this.upgradeSel(), rush: () => this.rushSel(), demolish: () => this.demolishSel(), close: () => { this.setState({ selTile: null, tab: "regeln" }); this.build(sk); } };
+    }
+    const tabs = (sel ? [['gebaeude', 'Gebäude']] : []).concat([['regeln', 'Regeln'], ['stadt', 'Insel'], ['clan', 'Clan']]).map(([id, label]) => ({ label, active: st.tab === id, inactive: st.tab !== id, pick: () => this.setState({ tab: id }) }));
     const views = [['insel', 'Insel'], ['karte', 'Weltkarte']].map(([id, label]) => ({ label, active: st.view === id, inactive: st.view !== id, pick: () => this.setState({ view: id }) }));
     const laws = this.LAWS.map(l => ({ ...l, track: st.laws[l.id] ? '#E9C46A' : '#33445F', align: st.laws[l.id] ? 'flex-end' : 'flex-start', border: st.laws[l.id] ? '#8C7638' : '#22314A',
-      toggle: () => this.setState(x => ({ laws: { ...x.laws, [l.id]: !x.laws[l.id] } })) }));
+      toggle: () => this.toggleLaw(l.id) }));
     const cn = s.counts, n = (x) => cn[x] || 0;
     const regionCount = Object.values(st.own).filter(v => v === 'me').length;
     const stats = [
@@ -766,8 +779,8 @@ class Game {
       troops: fmt(st.troops), troopRate: (Math.round(s.troopRate * 100) / 100).toLocaleString('de-DE'), regionCount,
       level: lv.lv, ringDash: (lvPct * circ).toFixed(1) + ' ' + circ.toFixed(1), clanPct: Math.min(100, Math.round(lv.lv / 5 * 100)),
       tools, tabs, views, laws, stats, voices: voices.slice(0, 3), tax: st.tax, buildingCount: Object.keys(this.grid).length,
-      onTax: (e) => this.setState({ tax: Number(e.target.value) }),
-      isIsland, isMap, tabRegeln: isIsland && st.tab === 'regeln', tabStadt: isIsland && st.tab === 'stadt', tabClan: isIsland && st.tab === 'clan',
+      onTax: (e) => this.setTax(Number(e.target.value)), sel, tabBau: isIsland && st.tab === 'gebaeude' && !!sel, builders: (TWRules.BUILDERS - busy) + '/' + TWRules.BUILDERS, th,
+      isIsland, isMap, tabRegeln: isIsland && (st.tab === 'regeln' || (st.tab === 'gebaeude' && !sel)), tabStadt: isIsland && st.tab === 'stadt', tabClan: isIsland && st.tab === 'clan',
       islandDisplay: isIsland ? 'flex' : 'none', islandBlock: isIsland ? 'block' : 'none', mapBlock: isMap ? 'block' : 'none',
       mapLoading: isMap && !st.mapReady, showLegend: isMap && st.mapReady,
       legend: [{ color: '#E9C46A', label: 'Dein Reich' }, { color: 'hsl(200, 45%, 62%)', label: 'Andere Spieler' }, { color: '#2B3B57', label: 'Freies Land' }].concat(Object.keys(this.FACTIONS).map(f => ({ color: this.FACTIONS[f].color, label: this.FACTIONS[f].name }))),

@@ -12,6 +12,7 @@
     map: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B9A4F0" stroke-width="2" aria-hidden="true"><path d="M4 21V4l8 3 8-3v13l-8 3-8-3"/><path d="M12 7v13"/></svg>',
     moon: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EEF2F7" stroke-width="2" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z"/></svg>',
     logout: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#EEF2F7" stroke-width="2" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>',
+    hammer: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#E3C38A" stroke-width="2" aria-hidden="true"><path d="M14 6l4 4"/><path d="M10 4l6 2 2 2-2 2-6-2z"/><path d="M11 9l-8 8 3 3 8-8"/></svg>',
     home: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#F4D98B" stroke-width="2" aria-hidden="true"><path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/></svg>'
   };
 
@@ -32,6 +33,7 @@
       ${pill(ICON.people, v.pop, v.jobs + ' Jobs', '#9CCFDB')}
       ${pill(ICON.smile, v.happy + '%', 'Zufrieden', '#A9D9A5')}
       ${pill(ICON.map, v.regionCount, 'Regionen', '#CDBEF5')}
+      ${v.isIsland ? pill(ICON.hammer, v.builders, 'Bauarbeiter frei', '#E3C38A') : ''}
       <div style="flex-grow:1"></div>
       <div class="seg">${v.views.map(x => `<button class="${x.active ? 'on' : ''}" data-a="${a(x.pick)}">${x.label}</button>`).join('')}</div>
       <div style="width:52px;height:52px;position:relative;display:flex;align-items:center;justify-content:center" title="Fortschritt zur nächsten Stufe">
@@ -46,7 +48,7 @@
     return `
       <div style="padding:16px 16px 8px;display:flex;justify-content:space-between;align-items:baseline"><span class="cinzel" style="font-size:15px">BAUEN</span><span class="muted" style="font-size:12px">${v.buildingCount} Gebäude</span></div>
       <div class="scroll" style="flex-grow:1;padding:0 12px 12px;display:flex;flex-direction:column;gap:6px">
-        ${v.tools.map(t => `<button class="tool ${t.selected ? 'on' : ''}" data-a="${a(t.pick)}"><span class="sw" style="background:${t.color}"></span><span><span class="nm">${esc(t.name)}</span><span class="in">${esc(t.info)}</span></span><span class="co">${t.costLabel}</span></button>`).join('')}
+        ${v.tools.map(t => `<button class="tool ${t.selected ? 'on' : ''} ${t.locked ? 'locked' : ''}" data-a="${a(t.pick)}"><span class="sw" style="background:${t.color}"></span><span><span class="nm">${esc(t.name)}</span><span class="in">${esc(t.info)}</span></span><span class="co">${t.costLabel}</span></button>`).join('')}
       </div>
       <p class="muted" style="font-size:12px;margin:0;padding:12px 16px 16px;line-height:1.5;border-top:1px solid var(--line)">Klick aufs Land baut, Klick auf ein Wohnhaus stockt auf. Ziehen dreht, Mausrad zoomt.</p>`;
   }
@@ -55,6 +57,22 @@
     let h = '';
     if (v.isIsland) h += `<div class="tabs">${v.tabs.map(t => `<button class="${t.active ? 'on' : ''}" data-a="${a(t.pick)}">${t.label}</button>`).join('')}</div>`;
     h += '<div class="scroll" style="flex-grow:1;padding:16px;display:flex;flex-direction:column;gap:14px">';
+    if (v.tabBau) { const b = v.sel; h += `
+      <div class="card" style="border-color:var(--gold);display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="width:36px;height:36px;border-radius:10px;background:${b.color};flex-shrink:0"></span>
+          <span style="flex-grow:1"><b style="font-size:17px;display:block">${esc(b.name)}</b><span class="muted" style="font-size:12px">${b.isHouse ? b.floors + " von " + b.maxFloors + " Stockwerken" : "Stufe " + b.lvl + " von " + b.maxLvl}</span></span>
+          <button class="iconbtn" style="width:36px;height:36px;font-size:18px" aria-label="Schließen" data-a="${a(b.close)}">×</button>
+        </div>
+        <div class="row" style="background:var(--panel)"><span class="muted">Jetzt</span><b style="font-weight:600;text-align:right">${esc(b.now)}</b></div>
+        ${b.next ? `<div class="row" style="background:var(--panel)"><span class="muted">Stufe ${b.lvl + 1}</span><b style="font-weight:600;color:var(--gold2);text-align:right">${esc(b.next)}</b></div>` : ""}
+        ${b.busy ? `<div><div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px"><span>Wird ausgebaut</span><span class="muted">noch ${b.remain}</span></div><div class="bar"><i style="width:${b.pct}%"></i></div></div>
+          <button class="cta" data-a="${a(b.rush)}">Sofort fertig · ${b.rushCost} Münzen</button>` : ""}
+        ${b.canUp && !b.builderFull ? `<button class="cta" data-a="${a(b.upgrade)}">Ausbauen · ${b.upCost} Münzen · ${b.upTime}</button>` : ""}
+        ${b.why ? `<div class="note" style="border-style:dashed">${esc(b.why)}</div>` : ""}
+        ${b.unlocks ? `<div class="note">Rathaus-Stufe ${b.lvl + 1} schaltet frei: <b>${esc(b.unlocks)}</b>, mehr Land und höhere Gebäudestufen.</div>` : ""}
+        ${b.isTH ? "" : `<button class="law" style="justify-content:center;min-height:44px;color:#F08A6C" data-a="${a(b.demolish)}">Abreißen</button>`}
+      </div>`; }
     if (v.tabRegeln) h += `
       <div class="card" style="display:flex;flex-direction:column;gap:8px">
         <label for="steuer" style="display:flex;justify-content:space-between;font-weight:600;font-size:14px"><span>Steuersatz</span><span style="color:var(--gold2)">${v.tax}%</span></label>
@@ -144,7 +162,7 @@
     $('loading').hidden = false; $('auth').hidden = true;
     try {
       const [me, world] = await Promise.all([TWApi.me(), TWApi.world()]);
-      game = new Game({ name: me.name, city: me.city, world, now: me.now });
+      game = new Game({ name: me.name, city: me.city, world, now: me.now, offline: me.offline });
       $('loading').hidden = true; $('app').hidden = false;
       game.onChange(render);
       render();

@@ -14,7 +14,7 @@ const TWApi = (() => {
     let data = {};
     try { data = await res.json(); } catch (e) {}
     if (res.status === 401 && path !== '/api/login') { setToken(null); }
-    if (!res.ok) throw new Error(data.fehler || 'Der Server antwortet gerade nicht.');
+    if (!res.ok) { const e = new Error(data.fehler || 'Der Server antwortet gerade nicht.'); e.data = data; throw e; }
     return data;
   }
   function setToken(t) {
@@ -29,8 +29,8 @@ const TWApi = (() => {
     async logout() { try { await call('POST', '/api/logout'); } catch (e) {} setToken(null); location.reload(); },
     me: () => call('GET', '/api/me'),
     world: () => call('GET', '/api/world'),
-    saveCity: (city, troopGain, leaving) => call('PUT', '/api/city', { city, troopGain }, leaving),
-    start: region => call('POST', '/api/world/start', { region }),
-    attack: region => call('POST', '/api/world/attack', { region })
+    action: a => call('POST', '/api/city/action', a),
+    start: (region, label) => call('POST', '/api/world/start', { region, label }),
+    attack: (region, label) => call('POST', '/api/world/attack', { region, label })
   };
 })();

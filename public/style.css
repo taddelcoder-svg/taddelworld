@@ -73,3 +73,4 @@ input[type=range] { accent-color: var(--gold); width: 100%; }
 #auth .err { color: #F08A6C; font-size: 13px; min-height: 18px; text-align: center; }
 #auth .switchmode { background: none; border: none; color: var(--gold2); font-size: 14px; text-decoration: underline; }
 #loading { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--muted); font-size: 16px; }
+.tool.locked { opacity: .5; }
